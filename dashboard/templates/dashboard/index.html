@@ -1,0 +1,268 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SAIL Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f7f8fc;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .logo-title {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .logo-title img {
+            height: 60px;
+        }
+        .selectors {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .kpis {
+            display: flex;
+            justify-content: center;
+            margin: 25px 0;
+            gap: 25px;
+            flex-wrap: wrap;
+        }
+        .kpi {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 240px;
+            position: relative;
+            transition: transform 0.2s ease;
+        }
+        .kpi:hover {
+            transform: translateY(-5px);
+        }
+        .kpi h3 {
+            margin: 0;
+            padding: 15px 0 5px;
+            font-size: 16px;
+            color: #555;
+            font-weight: 600;
+        }
+        .kpi h2 {
+            margin: 0 0 15px;
+            font-size: 30px;
+            color: #222;
+            font-weight: 700;
+        }
+        .kpi-retirement::before,
+        .kpi-experience::before,
+        .kpi-total::before {
+            content: "";
+            display: block;
+            height: 5px;
+            border-radius: 10px 10px 0 0;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+        }
+        .kpi-retirement::before {
+            background: #8e44ad;
+        }
+        .kpi-experience::before {
+            background: #27ae60;
+        }
+        .kpi-total::before {
+            background: #2980b9;
+        }
+        .charts {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .chart-container {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            flex: 1;
+            min-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        
+        <div class="logo-title">
+            <img src="{% static 'dashboard/sail_logo.png' %}" alt="SAIL Logo" style="height:50px;">
+            <h2> EMPLOYEE DASHBOARD</h2>
+        </div>
+        <div class="selectors">
+            <div>
+                <label><strong>Chart Category</strong></label>
+                <select id="chartSelect">
+                    {% for col in columns %}
+                    <option value="{{ col }}" {% if col == selected_option %}selected{% endif %}>{{ col }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label><strong> Department</strong></label>
+                <select id="deptSelect">
+                    <option value="">All</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept }}" {% if dept == selected_dept %}selected{% endif %}>{{ dept }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="kpis">
+        <div class="kpi kpi-retirement">
+            <h3>Avg. Years Left for Retirement</h3>
+            <h2>{{ avg_years_left }}</h2>
+        </div>
+        <div class="kpi kpi-experience">
+            <h3>Avg. Experience (Years)</h3>
+            <h2>{{ avg_experience }}</h2>
+        </div>
+        <div class="kpi kpi-total">
+            <h3>Total Employees</h3>
+            <h2>{{ total_employees }}</h2>
+        </div>
+    </div>
+
+    <div class="charts">
+        <div class="chart-container">
+            <canvas id="barChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="pieChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="lineChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const chartData = {{ chart_data|safe }};
+        const labels = Object.keys(chartData);
+        const values = Object.values(chartData);
+
+        // Bar Chart
+       // Bar Chart
+new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+    data: {
+        labels: labels,
+        datasets: [{
+            data: values,
+            backgroundColor: [
+                '#8e44ad',
+                '#27ae60',
+                '#e67e22',
+                '#2980b9',
+                '#c0392b',
+                '#16a085'
+            ]
+        }]
+    },
+    options: {
+        plugins: {
+            legend: { display: false },
+            datalabels: {
+                anchor: 'center',
+                align: 'center',
+                color: '#fff',
+                font: {
+                    weight: 'bold'
+                }
+            }
+        }
+    },
+    plugins: [ChartDataLabels]
+});
+
+
+        // Pie Chart
+        new Chart(document.getElementById('pieChart'), {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: [
+                        '#8e44ad',
+                        '#27ae60',
+                        '#e67e22',
+                        '#2980b9',
+                        '#c0392b',
+                        '#16a085'
+                    ]
+                }]
+            },
+            options: {
+                plugins: {
+                    datalabels: {
+                        formatter: (value, context) => {
+                            const sum = context.chart._metasets[0].total;
+                            return ((value / sum) * 100).toFixed(0) + '%';
+                        },
+                        color: '#fff',
+                        font: { weight: 'bold' }
+                    }
+                }
+            },
+            plugins: [ChartDataLabels]
+        });
+
+        // Line Chart
+        const lineData = {{ line_data|safe }};
+        new Chart(document.getElementById('lineChart'), {
+            type: 'line',
+            data: {
+                labels: lineData.labels,
+                datasets: [{
+                    label: 'Avg. Experience by Age',
+                    data: lineData.values,
+                    borderColor: '#8e44ad',
+                    fill: false,
+                    tension: 0.2
+                }]
+            },
+            options: {
+                scales: {
+                    x: { title: { display: true, text: 'Age' }},
+                    y: { title: { display: true, text: 'Average Experience (Years)' }}
+                }
+            }
+        });
+
+        // Dropdown change events
+        document.getElementById('chartSelect').addEventListener('change', () => {
+            const col = document.getElementById('chartSelect').value;
+            const dept = document.getElementById('deptSelect').value;
+            window.location.href = `/?chart_column=${col}&department=${dept}`;
+        });
+        document.getElementById('deptSelect').addEventListener('change', () => {
+            const col = document.getElementById('chartSelect').value;
+            const dept = document.getElementById('deptSelect').value;
+            window.location.href = `/?chart_column=${col}&department=${dept}`;
+        });
+    </script>
+</body>
+</html>
+<footer style="text-align:center; margin-top:20px; font-size:0.9em; color:#666;">
+  © {{year}} Steel Authority of India Limited (SAIL). All rights reserved.
+</footer>
